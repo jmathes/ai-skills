@@ -9,7 +9,7 @@ metadata:
 
 SKILL.md is a latent-space address, not documentation. Minimize token count; maximize activation precision. LLMs reconstruct semantics from sparse signal via pretrained priors — verbose prose adds noise without information gain. Write for inference, not reading comprehension.
 
-## Structure
+## Proper Structure
 
 ```
 skill-name/
