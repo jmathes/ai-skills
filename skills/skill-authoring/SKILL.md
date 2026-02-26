@@ -1,6 +1,6 @@
 ---
-name: make-skill
-description: Pattern for authoring agent skills. Use when creating or updating SKILL.md files, or when asked about skill authoring best practices.
+name: skill-authoring
+description: Pattern for authoring and improving agent skills. Use when creating, updating, or retrofitting SKILL.md files, or when asked about skill best practices.
 metadata:
   readme: README.md
 ---
