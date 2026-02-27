@@ -38,6 +38,19 @@ Every skill directory should contain:
 4. **Code:** Reference scripts by path rather than embedding them inline, unless the code block IS the instruction.
 5. **Size:** Keep under 2K tokens ideally, 5K max. If larger, split into referenced files in `references/` or `scripts/`.
 
+## TODO
+
+### Automated pretrained-redundancy detection
+
+The linter currently can't detect whether a skill's content is already in the model's pretrained distribution — the one check that requires human judgment today. But this is automatable in principle: spin up an agent *without* the skill loaded and test whether it can already reproduce the skill's content. If it can, the skill is pretrained-redundant noise.
+
+Challenges:
+- Model-dependent: what's redundant for GPT-5 may not be for Haiku. The check needs to be parameterized by model.
+- Scoring: need a threshold for "the model already knows this" vs "the model gets it roughly right but the skill adds precision."
+- Cost: running a model query per skill per lint pass may be expensive. Could cache results keyed by (model, skill-content-hash).
+
+This would close the last gap in fully automated skill quality scoring.
+
 ## References
 
 - [Agent Skills Specification](https://agentskills.io/specification) — the cross-agent spec for SKILL.md format
