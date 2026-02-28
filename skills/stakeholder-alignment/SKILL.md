@@ -21,10 +21,16 @@ Walk user through questionnaire:
 
 ## Use
 
-- Prioritize: tasks serving multiple stakeholders = highest ROI
-- Frame updates: match tone/content to recipient's values column
-- Flag zero-stakeholder tasks: needs reframing or is genuinely low priority
+When loaded (typically via overseer or personal-context), passively evaluate work against stakeholder values:
 
-## Review
+- If a task produces artifacts but nobody's being told → suggest a quick ping or update
+- If effort is invisible to all stakeholders → flag: reframe it or deprioritize
+- If a small addition (ADR, dashboard widget, commit message wording) would make work land better with a specific stakeholder → suggest it inline
+- If work naturally serves multiple stakeholders → call that out as high-ROI
+- Frame suggestions as "[manager] would want to see X" or "this is a [grand-manager] artifact" — tie to the person, not the abstraction
+
+Don't generate matrices or audits unprompted. Just nudge when something is close to landing well but missing a stakeholder angle.
+
+## Quarterly review
 
 Prompt quarterly or on role change: "Stakeholders still accurate? Priorities shifted?"

@@ -9,11 +9,11 @@ metadata:
 
 1. **Red** — Write the simplest possible failing test that defines desired behavior. This will often mean adding an input/expectation pair to a collection of test data. Run it. Confirm it fails for the expected reason.
 2. **Green** —
-   a. _Delegate to a stateless agent_ to write the minimal code to make the test pass. All SUT should be written by sub-agents. Sub-agents should be instructed to make the simplest possible change to make tests pass. Sub-agents should be reminded that "simplest possible change" implies no refactoring, no optimization, no extra code beyond what's needed to pass the test, no changes to the test.
+   a. Delegate to the `tdd-green` agent (`task` tool, `agent_type: "tdd-green"`). It writes the minimal code to make the test pass. No refactoring, no optimization, no extra code, no test changes.
    b. Run the test. Confirm it passes. If it doesn't, alert the user if possible, or debug.
 
 3. **Refactor** —
-   a. _Delegate to a stateless agent_ to DRY the SUT. Deduplication should involve the least possible planning for future deduplication, testing, or extension. As much as possible, these things should be discovered vs planned.
+   a. Delegate to the `tdd-refactor` agent (`task` tool, `agent_type: "tdd-refactor"`). It DRYs the SUT minimally — no planning for future deduplication/extension. Discovery over planning.
    b. Run tests. Confirm they all pass. If not, debug.
 
 ## Language-specific sidecars
