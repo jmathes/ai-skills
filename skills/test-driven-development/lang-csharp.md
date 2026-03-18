@@ -14,4 +14,3 @@
 ### Anti-patterns
 
 - `[SetUp]`/`[TearDown]` (NUnit-ism) — use constructor/`IDisposable` or `IAsyncLifetime`
-- Start with mocks. Switch to fakes when mocks start needing behaviors instead of canned output.
