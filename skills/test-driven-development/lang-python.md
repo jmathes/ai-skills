@@ -4,7 +4,7 @@ Framework: **pytest** + **pytest-describe**
 
 ### Structure
 
-### Preferred patterns
+### Requirements
 
 - `conftest.py` at each test directory level for shared fixtures
   - One per test directory, importing conftest from parent directory. Not imported from test files.
@@ -20,7 +20,7 @@ Framework: **pytest** + **pytest-describe**
 - `autouse=True` sparingly — only for universal setup (logging, DB cleanup, time/randomness mocks)
 - `behaves_like` to share tests across different fixture contexts
 
-### Anti-patterns
+### Forbidden
 
 - `unittest.TestCase` subclasses — lose fixture injection, parametrize, describe
 - `setUp` — couples setup to class hierarchy, no dependency graph
