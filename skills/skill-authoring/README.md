@@ -22,13 +22,27 @@ Every skill directory should contain:
 |------|----------|---------|
 | `SKILL.md` | LLMs | Terse, compressed instructions. Loaded into the agent's context window on activation. Target <2K tokens. |
 | `README.md` | Humans | Full explanation with background, examples, and rationale. Never loaded by the agent runtime. |
-| `scripts/` | Both | Executable resources. Referenced by SKILL.md, documented in README.md. |
+| `scripts/` | Both | Executable resources. Referenced by SKILL.md, documented in README.md. **Anything automatable MUST be a script.** |
 
 ## Why both files?
 
 - **SKILL.md alone** works for LLMs but is opaque to human collaborators who want to understand, contribute to, or evaluate the skill.
 - **README.md alone** wastes tokens when loaded into a context window and may hit the recommended 5K token limit for skill bodies.
 - **Both together** serve each audience in its native format.
+
+## Why maximize helper scripts?
+
+Any skill behavior that *can* be a script *must* be a script. This isn't a suggestion — it's a core principle. The reasons are compounding:
+
+1. **Greater introspection of LLM behavior.** When the LLM calls a script, you can see exactly what input it provided and what output it received. When the LLM does the same work inline, the reasoning is a black box buried in token generation. Scripts create observable boundaries.
+
+2. **More determinism.** A Python script that parses JSON or calls an API produces the same output every time. An LLM doing the same work inline may hallucinate field names, reformat data inconsistently, or skip steps depending on context window pressure. Scripts are reproducible; inline LLM behavior is probabilistic.
+
+3. **Less token usage.** Every token the LLM spends on deterministic work (data formatting, API calls, validation) is a token not spent on judgment, synthesis, and reasoning — the things LLMs are actually good at. Scripts offload the mechanical work.
+
+4. **Less context window usage.** Script output is typically compact and structured. Inline LLM reasoning for the same task consumes context window with chain-of-thought tokens that serve no downstream purpose. Scripts return only the result.
+
+The rule of thumb: if you could write a unit test for the behavior, it should be a script.
 
 ## SKILL.md writing guidelines
 

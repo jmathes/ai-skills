@@ -15,8 +15,23 @@ SKILL.md is a latent-space address, not documentation. Maximize information dens
 skill-name/
 ├── SKILL.md          # Terse. LLM-facing. Loaded into context window on activation.
 ├── README.md         # Verbose. Human-facing. Never loaded by agent runtime.
-└── scripts/          # Optional. Executable resources referenced by SKILL.md.
+└── scripts/          # Helper scripts. ANYTHING automatable MUST live here.
 ```
+
+## Helper Script Mandate
+
+If a behavior can be a script, it MUST be a script. This is not optional. Extract into `scripts/` any:
+
+- Data retrieval/formatting (API calls, file parsing, JSON manipulation)
+- Validation/linting checks
+- State management (timestamps, caches, configs)
+- Repetitive multi-step workflows
+- Calculations, transformations, sorting, filtering
+- Anything deterministic that doesn't require LLM judgment
+
+The LLM invokes scripts; it doesn't replicate their logic inline. SKILL.md references scripts by path and describes when to call them, not how they work internally.
+
+Only leave in SKILL.md: judgment calls, heuristic classification, natural language generation, and orchestration decisions that genuinely require LLM reasoning.
 
 ## SKILL.md format
 
@@ -36,6 +51,10 @@ Body: compressed instruction signal. Target <2K tokens. No prose preamble, no ba
 Full human-readable expansion. Same content, different encoding. Explain the "why", include examples, format for scanning. Note the SKILL.md terseness rationale at top so humans don't "fix" it.
 
 A missing README.md is a strong signal the SKILL.md is doing double-duty as human docs — filler phrases and explanatory prose confirm it. Retrofitting always starts by extracting human-readable content into README.md.
+
+## Skill placement
+
+On startup, check for `skill-placement.md` in this skill's directory (if present) for user-specific directory mappings and placement rules. That file describes where to place newly created skills.
 
 ## Skill vs. context
 
@@ -63,6 +82,7 @@ Surface this suggestion proactively when: skill body >3K tokens, skill contains 
 - Omitting README.md (makes skill opaque to human collaborators)
 - Pretrained-redundant code blocks (CLI help text, well-known specs — the model already has these)
 - Redundant description field — don't restate the body, use it for retrieval discrimination only
+- **Inline LLM behavior that could be a script** — if it's deterministic, extract it. LLMs doing data formatting, API calls, or file parsing inline is wasted tokens and non-reproducible.
 
 ## Automated lint
 
@@ -75,13 +95,13 @@ python scripts/lint_skills.py             # auto-discovers from ~/.copilot/confi
 
 Checks (5 exact, 3 heuristic):
 
-| Check | Level | Type |
-|---|---|---|
-| Missing `name`/`description` in frontmatter | FAIL | exact |
-| No README.md alongside SKILL.md | FAIL | exact |
-| Body >3K tokens | FAIL | exact |
-| Human-doc headings (Overview/Background/Introduction/Purpose) | FAIL | exact |
-| Large inline code blocks (>20 lines) | WARN | exact |
-| Filler phrases ("provides a", "is designed to", etc.) | WARN | heuristic |
-| Description/body keyword overlap >45% | WARN | heuristic |
-| Prose ratio >60% | WARN | heuristic |
+| Check                                                         | Level | Type      |
+| ------------------------------------------------------------- | ----- | --------- |
+| Missing `name`/`description` in frontmatter                   | FAIL  | exact     |
+| No README.md alongside SKILL.md                               | FAIL  | exact     |
+| Body >3K tokens                                               | FAIL  | exact     |
+| Human-doc headings (Overview/Background/Introduction/Purpose) | FAIL  | exact     |
+| Large inline code blocks (>20 lines)                          | WARN  | exact     |
+| Filler phrases ("provides a", "is designed to", etc.)         | WARN  | heuristic |
+| Description/body keyword overlap >45%                         | WARN  | heuristic |
+| Prose ratio >60%                                              | WARN  | heuristic |
