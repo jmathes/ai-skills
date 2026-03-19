@@ -140,6 +140,20 @@ def tty_reader(write_to_pty: WriteFunc, stop_event: threading.Event) -> None:
             time.sleep(0.01)
 
 
+def resize_watcher(pty: PTY, stop_event: threading.Event) -> None:
+    """Poll for terminal size changes and update the ConPTY."""
+    last_cols, last_rows = shutil.get_terminal_size()
+    while not stop_event.is_set():
+        cols, rows = shutil.get_terminal_size()
+        if cols != last_cols or rows != last_rows:
+            try:
+                pty.set_size(cols, rows)
+            except Exception:
+                pass
+            last_cols, last_rows = cols, rows
+        time.sleep(0.25)
+
+
 def main() -> None:
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description="stdin multiplexer for cross-session IPC"
@@ -208,6 +222,13 @@ def main() -> None:
         daemon=True,
     )
     tty_thread.start()
+
+    resize_thread: threading.Thread = threading.Thread(
+        target=resize_watcher,
+        args=(pty, stop_event),
+        daemon=True,
+    )
+    resize_thread.start()
 
     # Wait for child to exit
     while pty.isalive():
