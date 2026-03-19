@@ -185,8 +185,13 @@ def main() -> None:
     pipe_name: str = args.name
     stop_event: threading.Event = threading.Event()
 
-    # Resolve the executable
-    appname: str = shutil.which(cmd[0]) or cmd[0]
+    # Resolve the executable — force .exe on Windows to avoid .cmd/.ps1 shim conflicts
+    resolved: str | None = shutil.which(cmd[0])
+    if resolved and sys.platform == "win32" and not resolved.lower().endswith(".exe"):
+        exe_path: str | None = shutil.which(cmd[0] + ".exe")
+        if exe_path:
+            resolved = exe_path
+    appname: str = resolved or cmd[0]
     cmdline: str | None = subprocess.list2cmdline(cmd[1:]) if len(cmd) > 1 else None
 
     # Get terminal size for the PTY
