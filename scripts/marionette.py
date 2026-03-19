@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import msvcrt
 import os
+import re
 import shutil
 import sys
 import threading
@@ -34,6 +35,15 @@ from winpty import PTY
 PIPE_PREFIX: str = r"\\.\pipe\marionette-"
 
 WriteFunc = Callable[[str], None]
+
+# Terminal query responses that ConPTY emits but the host should consume,
+# not display. These are responses to DA1, DA2, DSR, DECRPM queries.
+_TERMINAL_RESPONSE_RE: re.Pattern[str] = re.compile(
+    r"\x1b\["       # CSI
+    r"[\?>\!]?"     # optional private/secondary prefix
+    r"[\d;]*"       # numeric params
+    r"[c\$ynR]"     # DA1(c), DA2(c), DSR(n/R), DECRPM($y)
+)
 
 
 def create_named_pipe(name: str) -> tuple[int, str]:
@@ -87,14 +97,21 @@ def pipe_listener(
                 pass
 
 
+def _filter_terminal_responses(text: str) -> str:
+    """Strip terminal query responses (DA1, DA2, DSR, DECRPM) from PTY output."""
+    return _TERMINAL_RESPONSE_RE.sub("", text)
+
+
 def pty_reader(pty: PTY, stop_event: threading.Event) -> None:
     """Read output from the ConPTY and write it to the real console."""
     while not stop_event.is_set():
         try:
             output: str = pty.read(blocking=False)
             if output:
-                sys.stdout.write(output)
-                sys.stdout.flush()
+                filtered: str = _filter_terminal_responses(output)
+                if filtered:
+                    sys.stdout.write(filtered)
+                    sys.stdout.flush()
             else:
                 time.sleep(0.01)
         except Exception:
