@@ -22,6 +22,7 @@ import msvcrt
 import os
 import re
 import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -39,10 +40,10 @@ WriteFunc = Callable[[str], None]
 # Terminal query responses that ConPTY emits but the host should consume,
 # not display. These are responses to DA1, DA2, DSR, DECRPM queries.
 _TERMINAL_RESPONSE_RE: re.Pattern[str] = re.compile(
-    r"\x1b\["       # CSI
-    r"[\?>\!]?"     # optional private/secondary prefix
-    r"[\d;]*"       # numeric params
-    r"[c\$ynR]"     # DA1(c), DA2(c), DSR(n/R), DECRPM($y)
+    r"\x1b\["  # CSI
+    r"[\?>\!]?"  # optional private/secondary prefix
+    r"[\d;]*"  # numeric params
+    r"[c\$ynR]"  # DA1(c), DA2(c), DSR(n/R), DECRPM($y)
 )
 
 
@@ -71,7 +72,10 @@ def pipe_listener(
     write_to_pty: WriteFunc,
     stop_event: threading.Event,
 ) -> None:
-    """Listen on a named pipe, forward complete messages to PTY input."""
+    """Listen on a named pipe, forward complete messages to PTY input.
+    Automatically appends Enter (\\r) after each message with a brief
+    delay so the PTY has time to process the text before submission.
+    """
     while not stop_event.is_set():
         pipe, _ = create_named_pipe(pipe_name)
         try:
@@ -82,6 +86,9 @@ def pipe_listener(
                     if data:
                         message: str = data.decode("utf-8", errors="replace")
                         write_to_pty(message)
+                        # Auto-submit: pause then send Enter
+                        time.sleep(1.0)
+                        write_to_pty("\r")
                 except pywintypes.error as e:
                     if e.winerror == 109:
                         break
@@ -144,13 +151,13 @@ def resize_watcher(pty: PTY, stop_event: threading.Event) -> None:
     """Poll for terminal size changes and update the ConPTY."""
     last_cols, last_rows = shutil.get_terminal_size()
     while not stop_event.is_set():
-        cols, rows = shutil.get_terminal_size()
-        if cols != last_cols or rows != last_rows:
-            try:
+        try:
+            cols, rows = shutil.get_terminal_size()
+            if cols != last_cols or rows != last_rows:
                 pty.set_size(cols, rows)
-            except Exception:
-                pass
-            last_cols, last_rows = cols, rows
+                last_cols, last_rows = cols, rows
+        except Exception:
+            pass
         time.sleep(0.25)
 
 
@@ -162,7 +169,8 @@ def main() -> None:
         "--name", required=True, help="Session name (used for pipe naming)"
     )
     parser.add_argument(
-        "command", nargs=argparse.REMAINDER,
+        "command",
+        nargs=argparse.REMAINDER,
         help="Command to wrap (after --)",
     )
     args: argparse.Namespace = parser.parse_args()
@@ -179,7 +187,7 @@ def main() -> None:
 
     # Resolve the executable
     appname: str = shutil.which(cmd[0]) or cmd[0]
-    cmdline: str | None = " ".join(cmd[1:]) if len(cmd) > 1 else None
+    cmdline: str | None = subprocess.list2cmdline(cmd[1:]) if len(cmd) > 1 else None
 
     # Get terminal size for the PTY
     cols, rows = shutil.get_terminal_size()
@@ -223,6 +231,7 @@ def main() -> None:
     )
     tty_thread.start()
 
+    # Resize watcher — 4Hz, all exceptions caught
     resize_thread: threading.Thread = threading.Thread(
         target=resize_watcher,
         args=(pty, stop_event),

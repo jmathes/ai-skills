@@ -17,17 +17,16 @@ PIPE_PREFIX: str = r"\\.\pipe\marionette-"
 
 
 def send_message(session_name: str, message: str) -> bool:
-    """Send a message to a marionette session's named pipe."""
+    """Send a message to a marionette session's named pipe.
+    Marionette auto-appends Enter after receiving the message."""
     pipe_path: str = PIPE_PREFIX + session_name
     try:
         handle: int = win32file.CreateFile(
             pipe_path,
             win32file.GENERIC_WRITE,
-            0,     # no sharing
-            None,  # security
+            0, None,
             win32file.OPEN_EXISTING,
-            0,     # flags
-            None,  # template
+            0, None,
         )
         win32file.WriteFile(handle, message.encode("utf-8"))
         win32file.CloseHandle(handle)
@@ -54,9 +53,8 @@ def main() -> None:
         print("Error: provide a message or use --stdin", file=sys.stderr)
         sys.exit(1)
 
-    # ConPTY expects \r for Enter (not \r\n — that double-submits in some apps)
-    if not message.endswith("\r"):
-        message = message.rstrip("\n").rstrip("\r") + "\r"
+    # Strip trailing newlines — send_message handles Enter separately
+    message = message.rstrip("\r\n")
 
     ok: bool = send_message(args.session, message)
     sys.exit(0 if ok else 1)
