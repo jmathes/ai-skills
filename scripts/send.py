@@ -54,9 +54,9 @@ def main() -> None:
         print("Error: provide a message or use --stdin", file=sys.stderr)
         sys.exit(1)
 
-    # ConPTY expects \r\n for Enter
-    if not message.endswith("\r\n"):
-        message = message.rstrip("\n").rstrip("\r") + "\r\n"
+    # ConPTY expects \r for Enter (not \r\n — that double-submits in some apps)
+    if not message.endswith("\r"):
+        message = message.rstrip("\n").rstrip("\r") + "\r"
 
     ok: bool = send_message(args.session, message)
     sys.exit(0 if ok else 1)
