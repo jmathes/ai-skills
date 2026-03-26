@@ -83,12 +83,49 @@ def parse_ph(raw):
     }
 
 
+LLM_REMINDER = (
+    "  ⚠  Write like a human. Not like an LLM.\n"
+    "     No em-dashes, and no sentences that would tempt one.\n"
+    "     If you catch yourself joining two thoughts with a dash,\n"
+    "     colon, or semicolon, split them into separate sentences.\n"
+    "     No filler, no hedging, no restating what you just said.\n"
+    "\n"
+    "     Hemmingway sounded human because he was exact, not because he was brief.\n"
+    "     If you say exactly what you mean, it will be brief.\n"
+    "     If you say the briefest thing, it will be ambiguous.\n"
+    "     Be like Hemmingway. Be brief indirectly.\n"
+)
+
+
+def _revise(text):
+    """Repeatedly show text back and ask for revision until satisfied."""
+    current = text
+    print(f"\n  ── You wrote ──\n  {current}")
+    print(
+        "  ── Write a second draft that sounds even less like an LLM. It must still adhere to the guidelines above. ──"
+    )
+    revised = input("  ✎ ").strip()
+    if not revised:
+        return current
+    current = revised
+    while True:
+        print(f"\n  ── Current draft ──\n  {current}")
+        print(
+            "  ── Write another draft that sounds even more human. If it can't be done, enter an empty string. ──"
+        )
+        again = input("  ✎ ").strip()
+        if not again:
+            return current
+        current = again
+
+
 def ask(prompt, default=None, optional=False, repeated=False, context=None):
     """Prompt the user interactively. Returns str, list[str], or None."""
     if context:
         prompt = prompt.replace("{$OPTION}", context)
 
     if repeated:
+        print(f"\n{LLM_REMINDER}")
         print(f"\n  {prompt}")
         print("  (one per line, blank line when done)")
         items = []
@@ -99,9 +136,11 @@ def ask(prompt, default=None, optional=False, repeated=False, context=None):
                     break
                 print("    (need at least one)")
                 continue
-            items.append(item)
+            revised = _revise(item)
+            items.append(revised)
         return items
 
+    print(f"\n{LLM_REMINDER}")
     tag = "[optional] " if optional else ""
     suf = f" [{default}]" if default else ""
     while True:
@@ -111,7 +150,7 @@ def ask(prompt, default=None, optional=False, repeated=False, context=None):
         if not val and optional:
             return None
         if val:
-            return val
+            return _revise(val)
         print("    (required)")
 
 
